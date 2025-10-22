@@ -1,4 +1,4 @@
-name: docs: deploy
+name: Documentation Deployment
 
 on:
   push:
@@ -10,10 +10,12 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Setup Node
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18.x'
@@ -24,19 +26,19 @@ jobs:
             npm ci || true
           fi
 
-      - name: Build docs (if script exists)
+      - name: Build docs (if build script exists)
         run: |
           if npm run | grep -q build:docs; then
             npm run build:docs
-          elif [ -f docs/index.md ]; then
-            echo "No build step; publishing docs folder directly"
+          elif [ -d docs ]; then
+            echo "No build step detected — publishing docs folder directly"
           else
-            echo "Add docs/ or build step"
+            echo "No docs directory found — nothing to publish"
+            exit 1
           fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          publish_dir: ./docs
-          # If you build a site into ./docs/build change the path accordingly
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
