@@ -1,0 +1,33 @@
+name: Scheduled Scrape & Backup
+
+on:
+  schedule:
+    # runs daily at 02:00 UTC (adjust as needed). Format: cron( min hour day month weekday )
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the scraper (run.js)
+        run: |
+          node run.js
+
+      - name: Upload scraped data
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scraped-data-$(date +%F)
+          path: public/data || public || ./data || true

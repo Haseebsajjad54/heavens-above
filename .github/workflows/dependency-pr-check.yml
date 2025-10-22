@@ -1,0 +1,46 @@
+name: Dependency PR checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
+
+jobs:
+  tests-for-dep-pr:
+    if: contains(github.actor, 'dependabot') || startsWith(github.head_ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+
+      - name: Install
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          if npm run | grep -q test; then
+            npm test
+          else
+            echo "No tests"
+          fi
+
+      - name: Post PR comment (optional)
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { context, github } = require('@actions/github');
+            const pr = context.issue.number;
+            const body = `Dependency PR checks ran — status: ${{ job.status }}. Please review and merge if tests pass.`;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: pr,
+              body
+            });

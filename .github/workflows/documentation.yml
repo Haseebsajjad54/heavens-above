@@ -1,0 +1,42 @@
+name: docs: deploy
+
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/documentation.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+
+      - name: Install dependencies (if docs require build)
+        run: |
+          if [ -f package.json ]; then
+            npm ci || true
+          fi
+
+      - name: Build docs (if script exists)
+        run: |
+          if npm run | grep -q build:docs; then
+            npm run build:docs
+          elif [ -f docs/index.md ]; then
+            echo "No build step; publishing docs folder directly"
+          else
+            echo "Add docs/ or build step"
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_dir: ./docs
+          # If you build a site into ./docs/build change the path accordingly
+          github_token: ${{ secrets.GITHUB_TOKEN }}
