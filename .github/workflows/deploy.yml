@@ -28,6 +28,10 @@ jobs:
       - name: Run tests
         run: npm test --if-present
 
+      - name: Install Heroku CLI
+        run: |
+          curl https://cli-assets.heroku.com/install.sh | sh
+
       - name: Deploy to Heroku
         uses: akhileshns/heroku-deploy@v4
         with:
