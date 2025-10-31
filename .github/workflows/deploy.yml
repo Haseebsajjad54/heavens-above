@@ -49,18 +49,18 @@ jobs:
       if: steps.package-check.outputs.exists == 'true'
       run: |
         mkdir -p deployment-logs
-        echo "📦 Installing dependencies..." | tee deployment-logs/install.log
+        echo " Installing dependencies..." | tee deployment-logs/install.log
         if [ -f "package-lock.json" ]; then
           npm ci 2>&1 | tee -a deployment-logs/install.log
         else
           npm install 2>&1 | tee -a deployment-logs/install.log
         fi
-        echo "✅ Dependencies installed successfully" | tee -a deployment-logs/install.log
+        echo " Dependencies installed successfully" | tee -a deployment-logs/install.log
     
     - name: Run tests with detailed reporting
       run: |
         mkdir -p deployment-logs
-        echo "🧪 Running pre-deployment tests..." | tee deployment-logs/pre-deploy-tests.log
+        echo " Running pre-deployment tests..." | tee deployment-logs/pre-deploy-tests.log
         if [ -f "package.json" ]; then
           npm test 2>&1 | tee -a deployment-logs/pre-deploy-tests.log || echo "Tests completed"
           echo "success=true" >> $GITHUB_OUTPUT
@@ -72,7 +72,7 @@ jobs:
     - name: Build application with artifacts
       run: |
         mkdir -p deployment-logs
-        echo "🏗️ Building application..." | tee deployment-logs/build.log
+        echo " Building application..." | tee deployment-logs/build.log
         if [ -f "package.json" ]; then
           npm run build 2>&1 | tee -a deployment-logs/build.log || echo "No build script found"
         else
@@ -81,7 +81,7 @@ jobs:
     
     - name: Create deployment artifact
       run: |
-        echo "📦 Creating deployment artifacts..."
+        echo " Creating deployment artifacts..."
         mkdir -p dist
         mkdir -p deployment-artifacts
         
@@ -140,7 +140,7 @@ jobs:
         echo "- Tests executed successfully" >> build-report.md
         echo "" >> build-report.md
         echo "## Next Step" >> build-report.md
-        echo "✅ **READY FOR DEPLOYMENT**" >> build-report.md
+        echo " **READY FOR DEPLOYMENT**" >> build-report.md
 
     - name: Upload build report
       uses: actions/upload-artifact@v4
@@ -176,29 +176,29 @@ jobs:
     
     - name: Simulate deployment with detailed logging
       run: |
-        echo "🚀 Starting deployment process..." | tee deployment-execution-logs/deployment.log
+        echo " Starting deployment process..." | tee deployment-execution-logs/deployment.log
         echo "Deployment Version: ${{ needs.build-and-test.outputs.build-version }}" | tee -a deployment-execution-logs/deployment.log
         echo "Deployment Time: $(date)" | tee -a deployment-execution-logs/deployment.log
         echo "" | tee -a deployment-execution-logs/deployment.log
         
-        echo "📋 Build artifacts:" | tee -a deployment-execution-logs/deployment.log
+        echo " Build artifacts:" | tee -a deployment-execution-logs/deployment.log
         ls -la downloaded-artifacts/ | tee -a deployment-execution-logs/deployment.log
         echo "" | tee -a deployment-execution-logs/deployment.log
         
-        echo "🔧 Simulating deployment to production..." | tee -a deployment-execution-logs/deployment.log
+        echo " Simulating deployment to production..." | tee -a deployment-execution-logs/deployment.log
         sleep 5
-        echo "✅ Application deployed successfully!" | tee -a deployment-execution-logs/deployment.log
-        echo "🌐 Deployment would be live at: https://your-app.com" | tee -a deployment-execution-logs/deployment.log
+        echo " Application deployed successfully!" | tee -a deployment-execution-logs/deployment.log
+        echo " Deployment would be live at: https://your-app.com" | tee -a deployment-execution-logs/deployment.log
         echo "" | tee -a deployment-execution-logs/deployment.log
         
         echo "Deployment to hosting platform (Heroku/AWS/Azure) simulated successfully" | tee -a deployment-execution-logs/deployment.log
     
     - name: Generate deployment report
       run: |
-        echo "# 🎉 Deployment Success Report" > deployment-report.md
+        echo "#  Deployment Success Report" > deployment-report.md
         echo "" >> deployment-report.md
         echo "## Deployment Information" >> deployment-report.md
-        echo "- **Status:** ✅ SUCCESS" >> deployment-report.md
+        echo "- **Status:**  SUCCESS" >> deployment-report.md
         echo "- **Version:** ${{ needs.build-and-test.outputs.build-version }}" >> deployment-report.md
         echo "- **Environment:** Production" >> deployment-report.md
         echo "- **Deployed:** $(date)" >> deployment-report.md
@@ -225,7 +225,7 @@ jobs:
     
     - name: Notify deployment success
       run: |
-        echo "🚀 DEPLOYMENT COMPLETED SUCCESSFULLY!"
+        echo " DEPLOYMENT COMPLETED SUCCESSFULLY!"
         echo "====================================="
         echo "Application: ${{ github.repository }}"
         echo "Version: ${{ needs.build-and-test.outputs.build-version }}"

@@ -49,7 +49,7 @@ jobs:
     - name: Run tests with detailed reporting
       id: test-run
       run: |
-        echo "🧪 Starting test execution..."
+        echo " Starting test execution..."
         if [ -f "package.json" ]; then
           # Create test results directory
           mkdir -p test-results
@@ -71,7 +71,7 @@ jobs:
       
     - name: Run linting with report
       run: |
-        echo "🔍 Running linting analysis..."
+        echo " Running linting analysis..."
         if [ -f "package.json" ]; then
           mkdir -p lint-results
           npm run lint 2>&1 | tee lint-results/lint-report-${{ matrix.node-version }}.log || echo "Linting completed"
@@ -157,7 +157,7 @@ jobs:
     
     - name: Run security audit with detailed report
       run: |
-        echo "🔒 Running comprehensive security audit..."
+        echo "Running comprehensive security audit..."
         mkdir -p security-reports
         
         if [ -f "package.json" ]; then
@@ -172,13 +172,13 @@ jobs:
           
           # Check if audit found vulnerabilities
           if [ -s "security-reports/audit-report.json" ] && [ "$(jq -r '.metadata.vulnerabilities.total // 0' security-reports/audit-report.json 2>/dev/null || echo 0)" -gt 0 ]; then
-            echo "❌ **Vulnerabilities Found:**" >> security-reports/security-summary.md
+            echo "**Vulnerabilities Found:**" >> security-reports/security-summary.md
             echo "Total: $(jq -r '.metadata.vulnerabilities.total' security-reports/audit-report.json)" >> security-reports/security-summary.md
             echo "Critical: $(jq -r '.metadata.vulnerabilities.critical' security-reports/audit-report.json)" >> security-reports/security-summary.md
             echo "High: $(jq -r '.metadata.vulnerabilities.high' security-reports/audit-report.json)" >> security-reports/security-summary.md
             echo "Moderate: $(jq -r '.metadata.vulnerabilities.moderate' security-reports/audit-report.json)" >> security-reports/security-summary.md
           else
-            echo "✅ **No vulnerabilities found**" >> security-reports/security-summary.md
+            echo " **No vulnerabilities found**" >> security-reports/security-summary.md
           fi
           
           echo "Security audit completed"

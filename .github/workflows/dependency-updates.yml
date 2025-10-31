@@ -2,7 +2,7 @@ name: Dependency Updates
 
 on:
   schedule:
-    - cron: '0 0 * * 1'  # Weekly on Monday at midnight UTC
+    - cron: '0 0 * * 1'  
   workflow_dispatch:
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
       run: |
         mkdir -p dependency-reports
         
-        echo "🔍 Checking for outdated dependencies..." | tee dependency-reports/dependency-check.log
+        echo " Checking for outdated dependencies..." | tee dependency-reports/dependency-check.log
         npm install 2>&1 | tee -a dependency-reports/dependency-check.log
         
         # Generate detailed outdated report
@@ -51,7 +51,7 @@ jobs:
         echo "" >> dependency-reports/dependency-report.md
         
         if [ -s "dependency-reports/outdated.json" ] && [ "$(cat dependency-reports/outdated.json)" != "{}" ]; then
-          echo "## 🚨 Outdated Dependencies Found" >> dependency-reports/dependency-report.md
+          echo "##  Outdated Dependencies Found" >> dependency-reports/dependency-report.md
           echo "" >> dependency-reports/dependency-report.md
           
           # Count outdated dependencies
@@ -66,7 +66,7 @@ jobs:
           echo "has-updates=true" >> $GITHUB_OUTPUT
           echo "Found $OUTDATED_COUNT outdated dependencies"
         else
-          echo "## ✅ All Dependencies Up to Date" >> dependency-reports/dependency-report.md
+          echo "##  All Dependencies Up to Date" >> dependency-reports/dependency-report.md
           echo "No outdated dependencies found." >> dependency-reports/dependency-report.md
           echo "has-updates=false" >> $GITHUB_OUTPUT
           echo "All dependencies are up to date"
@@ -100,7 +100,7 @@ jobs:
       run: |
         mkdir -p security-reports
         
-        echo "🔒 Running comprehensive security audit..." | tee security-reports/security-audit.log
+        echo " Running comprehensive security audit..." | tee security-reports/security-audit.log
         echo "Audit Date: $(date)" >> security-reports/security-audit.log
         echo "Repository: ${{ github.repository }}" >> security-reports/security-audit.log
         
@@ -121,7 +121,7 @@ jobs:
           VULN_MODERATE=$(jq -r '.metadata.vulnerabilities.moderate // 0' security-reports/audit-details.json 2>/dev/null || echo "0")
           
           if [ "$VULN_TOTAL" -gt 0 ]; then
-            echo "## 🚨 Security Vulnerabilities Found" >> security-reports/security-summary.md
+            echo "##  Security Vulnerabilities Found" >> security-reports/security-summary.md
             echo "" >> security-reports/security-summary.md
             echo "**Total Vulnerabilities:** $VULN_TOTAL" >> security-reports/security-summary.md
             echo "**Critical:** $VULN_CRITICAL" >> security-reports/security-summary.md
@@ -133,11 +133,11 @@ jobs:
             echo "2. Review critical and high severity issues immediately" >> security-reports/security-summary.md
             echo "3. Update dependencies with known security patches" >> security-reports/security-summary.md
           else
-            echo "## ✅ No Security Vulnerabilities Found" >> security-reports/security-summary.md
+            echo "##  No Security Vulnerabilities Found" >> security-reports/security-summary.md
             echo "All dependencies are secure at the moderate level or above." >> security-reports/security-summary.md
           fi
         else
-          echo "## ℹ️ Security Audit Information" >> security-reports/security-summary.md
+          echo "## ℹ Security Audit Information" >> security-reports/security-summary.md
           echo "Security audit completed. No vulnerabilities detected or audit not supported." >> security-reports/security-summary.md
         fi
         
@@ -159,7 +159,7 @@ jobs:
     steps:
     - name: Generate dependency management summary
       run: |
-        echo "# 📦 Dependency Management Summary" > dependency-management-summary.md
+        echo "#  Dependency Management Summary" > dependency-management-summary.md
         echo "" >> dependency-management-summary.md
         echo "## Workflow Execution" >> dependency-management-summary.md
         echo "- **Workflow:** ${{ github.workflow }}" >> dependency-management-summary.md
@@ -187,9 +187,9 @@ jobs:
         
         echo "## Next Steps" >> dependency-management-summary.md
         if [ "${{ needs.dependency-check.outputs.has-updates }}" = "true" ]; then
-          echo "🚨 **ACTION REQUIRED:** Update outdated dependencies" >> dependency-management-summary.md
+          echo " **ACTION REQUIRED:** Update outdated dependencies" >> dependency-management-summary.md
         else
-          echo "✅ **DEPENDENCIES UP TO DATE**" >> dependency-management-summary.md
+          echo " **DEPENDENCIES UP TO DATE**" >> dependency-management-summary.md
         fi
         
         echo "Dependency management summary generated successfully!"

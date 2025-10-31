@@ -43,7 +43,7 @@ jobs:
     
     - name: Build documentation
       run: |
-        echo "🚀 Building documentation site..."
+        echo " Building documentation site..."
         
         # Create site directory
         mkdir -p _site
@@ -133,41 +133,41 @@ jobs:
         <body>
             <div class="container">
                 <header>
-                    <h1>🚀 heavens-above</h1>
+                    <h1> heavens-above</h1>
                     <p class="subtitle">Project Documentation & Resources</p>
                 </header>
                 
                 <div class="actions-info">
-                    <strong>🤖 Automated Deployment:</strong> This site is automatically built and deployed using GitHub Actions.
+                    <strong> Automated Deployment:</strong> This site is automatically built and deployed using GitHub Actions.
                 </div>
                 
                 <div class="file-list">
-                    <h3>📚 Available Documents:</h3>
+                    <h3> Available Documents:</h3>
         EOF
         
         # Add README.md first if it exists
         if [ -f "README.md" ]; then
-            echo "<div class='file-item'><span class='emoji'>📖</span> <a href='README.md'>README.md</a> - Main project documentation</div>" >> _site/index.html
+            echo "<div class='file-item'><span class='emoji'></span> <a href='README.md'>README.md</a> - Main project documentation</div>" >> _site/index.html
             cp "README.md" _site/
         fi
         
         # Add other markdown files
         for file in *.md; do
           if [ -f "$file" ] && [ "$file" != "README.md" ]; then
-            echo "<div class='file-item'><span class='emoji'>📄</span> <a href='$file'>$file</a></div>" >> _site/index.html
+            echo "<div class='file-item'><span class='emoji'></span> <a href='$file'>$file</a></div>" >> _site/index.html
             cp "$file" _site/
           fi
         done
         
         # Copy docs folder if exists
         if [ -d "docs" ]; then
-          echo "<div class='file-item'><span class='emoji'>📁</span> <a href='docs/'>docs/</a> - Documentation directory</div>" >> _site/index.html
+          echo "<div class='file-item'><span class='emoji'></span> <a href='docs/'>docs/</a> - Documentation directory</div>" >> _site/index.html
           cp -r docs _site/
         fi
         
         # Add GitHub workflow info if exists
         if [ -d ".github/workflows" ]; then
-          echo "<div class='file-item'><span class='emoji'>⚙️</span> <a href='.github/workflows/'>GitHub Actions Workflows</a></div>" >> _site/index.html
+          echo "<div class='file-item'><span class='emoji'></span> <a href='.github/workflows/'>GitHub Actions Workflows</a></div>" >> _site/index.html
           mkdir -p _site/.github
           cp -r .github/workflows _site/.github/ 2>/dev/null || true
         fi
@@ -186,13 +186,13 @@ jobs:
         </html>
         EOF
         
-        echo "✅ Documentation built successfully!"
-        echo "📁 Contents of _site directory:"
+        echo " Documentation built successfully!"
+        echo " Contents of _site directory:"
         find _site -type f | sort
     
     - name: Show build results
       run: |
-        echo "📊 Build summary:"
+        echo " Build summary:"
         echo "Total files in _site: $(find _site -type f | wc -l)"
         echo "Directory structure:"
         tree _site || ls -la _site/
@@ -211,16 +211,16 @@ jobs:
     - name: Success message
       if: success()
       run: |
-        echo "🎉 Documentation successfully deployed to GitHub Pages!"
-        echo "📖 Your site is now live at:"
+        echo " Documentation successfully deployed to GitHub Pages!"
+        echo " Your site is now live at:"
         echo "   https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
         echo ""
-        echo "🔗 Direct link: ${{ steps.deployment.outputs.page_url }}"
+        echo " Direct link: ${{ steps.deployment.outputs.page_url }}"
     
     - name: Deployment failed notification
       if: failure()
       run: |
-        echo "❌ Documentation deployment failed!"
+        echo " Documentation deployment failed!"
         echo "Please check:"
         echo "1. GitHub Pages is enabled in repository Settings → Pages"
         echo "2. Repository has proper permissions"
