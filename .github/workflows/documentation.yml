@@ -206,7 +206,7 @@ jobs:
       id: deployment
       uses: actions/deploy-pages@v4
       # Add timeout for deployment
-      timeout-minutes: 5
+      timeout-minutes: 4
     
     - name: Success message
       if: success()
