@@ -44,11 +44,11 @@
 
 # \### Interpreting Results
 
-# \- \*\*Green checkmark\*\* ✅: All checks passed, code is ready
+# \- \*\*Green checkmark\*\* : All checks passed, code is ready
 
-# \- \*\*Red X\*\* ❌: One or more checks failed, review logs for details
+# \- \*\*Red X\*\* : One or more checks failed, review logs for details
 
-# \- \*\*Yellow dot\*\* ⚠️: Workflow in progress
+# \- \*\*Yellow dot\*\* : Workflow in progress
 
 # 
 
