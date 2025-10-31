@@ -32,27 +32,53 @@ jobs:
         npm init -y
         echo "Initialized project for dependency check"
     
-    - name: Check for outdated dependencies
+    - name: Check for outdated dependencies with detailed reporting
       if: steps.package-check.outputs.exists == 'true'
       id: outdated-check
       run: |
-        npm install  # Ensure dependencies are installed
-        npm outdated --json > outdated.json || echo "{}" > outdated.json
-        if [ -s outdated.json ] && [ "$(cat outdated.json)" != "{}" ]; then
+        mkdir -p dependency-reports
+        
+        echo "🔍 Checking for outdated dependencies..." | tee dependency-reports/dependency-check.log
+        npm install 2>&1 | tee -a dependency-reports/dependency-check.log
+        
+        # Generate detailed outdated report
+        npm outdated --json > dependency-reports/outdated.json 2>&1 || echo "{}" > dependency-reports/outdated.json
+        
+        # Create human-readable report
+        echo "# Dependency Update Report" > dependency-reports/dependency-report.md
+        echo "**Generated:** $(date)" >> dependency-reports/dependency-report.md
+        echo "**Repository:** ${{ github.repository }}" >> dependency-reports/dependency-report.md
+        echo "" >> dependency-reports/dependency-report.md
+        
+        if [ -s "dependency-reports/outdated.json" ] && [ "$(cat dependency-reports/outdated.json)" != "{}" ]; then
+          echo "## 🚨 Outdated Dependencies Found" >> dependency-reports/dependency-report.md
+          echo "" >> dependency-reports/dependency-report.md
+          
+          # Count outdated dependencies
+          OUTDATED_COUNT=$(jq -r 'length' dependency-reports/outdated.json 2>/dev/null || echo "0")
+          echo "**Total outdated dependencies:** $OUTDATED_COUNT" >> dependency-reports/dependency-report.md
+          echo "" >> dependency-reports/dependency-report.md
+          
+          # List outdated packages
+          echo "### Outdated Packages:" >> dependency-reports/dependency-report.md
+          jq -r 'to_entries[] | " - **\(.key):** \(.value.current) → \(.value.latest)"' dependency-reports/outdated.json 2>/dev/null >> dependency-reports/dependency-report.md || echo " - Error parsing outdated packages" >> dependency-reports/dependency-report.md
+          
           echo "has-updates=true" >> $GITHUB_OUTPUT
-          echo "Found outdated dependencies:"
-          cat outdated.json
+          echo "Found $OUTDATED_COUNT outdated dependencies"
         else
+          echo "## ✅ All Dependencies Up to Date" >> dependency-reports/dependency-report.md
+          echo "No outdated dependencies found." >> dependency-reports/dependency-report.md
           echo "has-updates=false" >> $GITHUB_OUTPUT
           echo "All dependencies are up to date"
         fi
     
-    - name: Upload outdated dependencies report
+    - name: Upload dependency reports
       uses: actions/upload-artifact@v4
       with:
-        name: outdated-dependencies
-        path: outdated.json
-      if: steps.outdated-check.outputs.has-updates == 'true'
+        name: dependency-reports-${{ github.run_id }}
+        path: dependency-reports/
+        retention-days: 30
+      if: always()
 
   security-updates:
     runs-on: ubuntu-latest
@@ -69,9 +95,109 @@ jobs:
           echo "exists=false" >> $GITHUB_OUTPUT
         fi
     
-    - name: Run security audit
+    - name: Run comprehensive security audit
       if: steps.package-check.outputs.exists == 'true'
       run: |
-        echo "Checking for security vulnerabilities..."
-        npm audit --audit-level moderate || echo "No security issues found or audit not supported"
-        echo "Security audit completed"
+        mkdir -p security-reports
+        
+        echo "🔒 Running comprehensive security audit..." | tee security-reports/security-audit.log
+        echo "Audit Date: $(date)" >> security-reports/security-audit.log
+        echo "Repository: ${{ github.repository }}" >> security-reports/security-audit.log
+        
+        # Run npm audit with detailed output
+        npm audit --audit-level moderate --json > security-reports/audit-details.json 2>&1 || true
+        
+        # Generate security summary
+        echo "# Security Audit Report" > security-reports/security-summary.md
+        echo "**Audit Date:** $(date)" >> security-reports/security-summary.md
+        echo "**Repository:** ${{ github.repository }}" >> security-reports/security-summary.md
+        echo "" >> security-reports/security-summary.md
+        
+        # Check if vulnerabilities were found
+        if [ -s "security-reports/audit-details.json" ]; then
+          VULN_TOTAL=$(jq -r '.metadata.vulnerabilities.total // 0' security-reports/audit-details.json 2>/dev/null || echo "0")
+          VULN_CRITICAL=$(jq -r '.metadata.vulnerabilities.critical // 0' security-reports/audit-details.json 2>/dev/null || echo "0")
+          VULN_HIGH=$(jq -r '.metadata.vulnerabilities.high // 0' security-reports/audit-details.json 2>/dev/null || echo "0")
+          VULN_MODERATE=$(jq -r '.metadata.vulnerabilities.moderate // 0' security-reports/audit-details.json 2>/dev/null || echo "0")
+          
+          if [ "$VULN_TOTAL" -gt 0 ]; then
+            echo "## 🚨 Security Vulnerabilities Found" >> security-reports/security-summary.md
+            echo "" >> security-reports/security-summary.md
+            echo "**Total Vulnerabilities:** $VULN_TOTAL" >> security-reports/security-summary.md
+            echo "**Critical:** $VULN_CRITICAL" >> security-reports/security-summary.md
+            echo "**High:** $VULN_HIGH" >> security-reports/security-summary.md
+            echo "**Moderate:** $VULN_MODERATE" >> security-reports/security-summary.md
+            echo "" >> security-reports/security-summary.md
+            echo "### Recommended Actions:" >> security-reports/security-summary.md
+            echo "1. Run `npm audit fix` to automatically fix vulnerabilities" >> security-reports/security-summary.md
+            echo "2. Review critical and high severity issues immediately" >> security-reports/security-summary.md
+            echo "3. Update dependencies with known security patches" >> security-reports/security-summary.md
+          else
+            echo "## ✅ No Security Vulnerabilities Found" >> security-reports/security-summary.md
+            echo "All dependencies are secure at the moderate level or above." >> security-reports/security-summary.md
+          fi
+        else
+          echo "## ℹ️ Security Audit Information" >> security-reports/security-summary.md
+          echo "Security audit completed. No vulnerabilities detected or audit not supported." >> security-reports/security-summary.md
+        fi
+        
+        echo "Security audit completed" | tee -a security-reports/security-audit.log
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports-${{ github.run_id }}
+        path: security-reports/
+        retention-days: 30
+      if: always()
+
+  dependency-summary:
+    runs-on: ubuntu-latest
+    needs: [dependency-check, security-updates]
+    if: always()
+    
+    steps:
+    - name: Generate dependency management summary
+      run: |
+        echo "# 📦 Dependency Management Summary" > dependency-management-summary.md
+        echo "" >> dependency-management-summary.md
+        echo "## Workflow Execution" >> dependency-management-summary.md
+        echo "- **Workflow:** ${{ github.workflow }}" >> dependency-management-summary.md
+        echo "- **Run ID:** ${{ github.run_id }}" >> dependency-management-summary.md
+        echo "- **Trigger:** ${{ github.event_name }}" >> dependency-management-summary.md
+        echo "- **Completed:** $(date)" >> dependency-management-summary.md
+        echo "" >> dependency-management-summary.md
+        
+        echo "## Job Results" >> dependency-management-summary.md
+        echo "- **Dependency Check:** ${{ needs.dependency-check.result }}" >> dependency-management-summary.md
+        echo "- **Security Audit:** ${{ needs.security-updates.result }}" >> dependency-management-summary.md
+        echo "" >> dependency-management-summary.md
+        
+        echo "## Generated Artifacts" >> dependency-management-summary.md
+        echo "### Dependency Reports:" >> dependency-management-summary.md
+        echo "- Outdated dependencies list" >> dependency-management-summary.md
+        echo "- Dependency update recommendations" >> dependency-management-summary.md
+        echo "- Package version analysis" >> dependency-management-summary.md
+        echo "" >> dependency-management-summary.md
+        echo "### Security Reports:" >> dependency-management-summary.md
+        echo "- Security vulnerability details" >> dependency-management-summary.md
+        echo "- Risk assessment" >> dependency-management-summary.md
+        echo "- Fix recommendations" >> dependency-management-summary.md
+        echo "" >> dependency-management-summary.md
+        
+        echo "## Next Steps" >> dependency-management-summary.md
+        if [ "${{ needs.dependency-check.outputs.has-updates }}" = "true" ]; then
+          echo "🚨 **ACTION REQUIRED:** Update outdated dependencies" >> dependency-management-summary.md
+        else
+          echo "✅ **DEPENDENCIES UP TO DATE**" >> dependency-management-summary.md
+        fi
+        
+        echo "Dependency management summary generated successfully!"
+        cat dependency-management-summary.md
+    
+    - name: Upload dependency summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: dependency-management-summary
+        path: dependency-management-summary.md
+        retention-days: 30
